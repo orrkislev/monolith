@@ -1,15 +1,16 @@
-import { init, lights, animate, makeEnvMap, renderer, render } from './general.js'
-import { terrain, ball, monolith, more } from './Objects.js'
+import { init, lights, render, makeEnvMap } from './general.js'
+import { terrain, monolith, more, fog, alienTerrain } from './Objects.js'
+import { initTextures } from './textures.js'
 
-export function run() {
+export async function run() {
+    await initTextures()
     init()
     lights()
-
     terrain()
     makeEnvMap()
     monolith()
+    fog()
     more()
-
-    animate()
+    alienTerrain()
+    render()
 }
-// render()

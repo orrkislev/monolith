@@ -1,42 +1,35 @@
+import { BackSide, ShaderMaterial } from "three"
+import { random } from "../../utils";
+
 const bgShader = {
-
     uniforms: {},
-
     vertexShader: /* glsl */`
-        varying vec2 vUv;
+        varying vec2 _uv;
 		void main() {
-            vUv = uv;
+            _uv = uv;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 		}`,
-
     fragmentShader: /* glsl */`
-    uniform vec2 resolution;
-    uniform float vTime;
-    uniform float cloudcover;
-    uniform float cloudscale;
-    varying vec2 vUv;
+    uniform bool isFog;
+    uniform vec3 color;
+    uniform float brightness;
+    uniform float offset;
+    uniform float cover;
+    uniform float scale;
+    uniform float opacity;
+    uniform float weirdness;
 
-    // const float cloudscale = .2;
-    const float speed = 0.03;
-    const float clouddark = 0.5;
-    const float cloudlight = 0.3;
-    // const float cloudcover = 1.0;
-    const float cloudalpha = 8.0;
-    const float skytint = 0.5;
-    const vec3 skycolour1 = vec3(.72,.85,.85);
-    const vec3 skycolour2 = vec3(.67,.76,.91);
+    varying vec2 _uv;
 
-    const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );
-    
+    const mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );    
     vec2 hash( vec2 p ) {
         p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));
         return -1.0 + 2.0*fract(sin(p)*43758.5453123);
     }
-    
     float noise( in vec2 p ) {
         const float K1 = 0.366025404; // (sqrt(3)-1)/2;
         const float K2 = 0.211324865; // (3-sqrt(3))/6;
-        vec2 i = floor(p + (p.x+p.y)*K1);	
+        vec2 i = floor(p + (p.x+p.y)*K1);
         vec2 a = p - i + (i.x+i.y)*K2;
         vec2 o = (a.x>a.y) ? vec2(1.0,0.0) : vec2(0.0,1.0); //vec2 of = 0.5 + 0.5*vec2(sign(a.x-a.y), sign(a.y-a.x));
         vec2 b = a - o + K2;
@@ -56,82 +49,88 @@ const bgShader = {
         return total;
     }
     
-    // -----------------------------------------------
-    
     void main() {
-        vec2 iResolution = resolution;
-        float iTime = vTime;
+        vec2 p = _uv.xy;
+        vec2 uv = _uv * weirdness;
+        float scale2 = scale + p.y;
+        float q = fbm(uv * scale2 * 0.5);
         
-        vec2 p = vUv.xy / iResolution.xy;
-        vec2 uv = vUv;
-        float cloudscale2 = cloudscale + p.y;
-        float time = iTime * speed;
-        float q = fbm(uv * cloudscale2 * 0.5);
-        
-        //ridged noise shape
         float r = 0.0;
-        uv *= cloudscale2;
-        uv -= q - time;
+        uv *= scale2;
+        uv -= q - offset;
         float weight = 0.8;
         for (int i=0; i<8; i++){
             r += abs(weight*noise( uv ));
-            uv = m*uv + time;
+            uv = m*uv + offset;
             weight *= 0.7;
         }
-        
-        //noise shape
+
         float f = 0.0;
-        uv = vUv;
-        uv *= cloudscale2;
-        uv -= q - time;
+        uv = _uv;
+        uv *= scale2;
+        uv -= q - offset;
         weight = 0.7;
         for (int i=0; i<8; i++){
             f += weight*noise( uv );
-            uv = m*uv + time;
+            uv = m*uv + offset;
             weight *= 0.6;
         }
         
         f *= r + f;
         
-        //noise colour
         float c = 0.0;
-        time = iTime * speed * 2.0;
-        uv = vUv;
-        uv *= cloudscale2*2.0;
-        uv -= q - time;
+        uv = _uv * scale2 * 2.0 - q + offset * 2.0;
         weight = 0.4;
         for (int i=0; i<7; i++){
             c += weight*noise( uv );
-            uv = m*uv + time;
+            uv = m*uv + offset * 2.0;
             weight *= 0.6;
         }
-        
-        //noise ridge colour
-        float c1 = 0.0;
-        time = iTime * speed * 3.0;
-        uv = vUv;
-        uv *= cloudscale2*3.0;
-        uv -= q - time;
+        uv = _uv * scale2 * 3.0 - q + offset * 3.0;
         weight = 0.4;
         for (int i=0; i<7; i++){
-            c1 += abs(weight*noise( uv ));
-            uv = m*uv + time;
+            c += abs(weight*noise( uv ));
+            uv = m*uv + offset * 3.0;
             weight *= 0.6;
         }
-        
-        c += c1;
-        
-        vec3 skycolour = mix(skycolour2, skycolour1, p.y);
-        vec3 cloudcolour = vec3(1.1, 1.1, 1.1) * clamp((clouddark + cloudlight*c), 0.0, 1.0);
-       
-        f = cloudcover + cloudalpha*f*r;
-        
-        vec3 result = mix(skycolour, clamp(skytint * skycolour + cloudcolour, 0.0, 1.0), clamp(f + c, 0.0, 1.0));
-        
-        gl_FragColor = vec4( result, 1.0 );
+
+        if (isFog) {
+            vec3 fogColor = vec3(1.1, 1.1, 1.1) * clamp((0.9 + 1.0*c), 0.0, 1.0);
+            f = cover + 8.0*f*r;
+            float fogVal = clamp(f + c, 0.0, 1.0);
+            float vignnete = -p.y * p.y * p.y + 1.0;
+            vec4 result = vec4(fogColor, fogVal * opacity * (1.0-p.y) * vignnete);
+            gl_FragColor = result;
+        } else {
+            float bgVal =  mix(brightness * 0.4, brightness * 1.2, 1.0-_uv.y);
+            vec3 bgColour = color * bgVal;
+            vec3 cloudcolor = vec3(1.1, 1.1, 1.1) * clamp((0.65 + 0.3*c), 0.0, 1.0);
+            f = cover + 8.0 * f * r;
+            vec3 result = mix(bgColour, clamp(0.5 * bgColour + cloudcolor, 0.0, 1.0), clamp(f + c, 0.0, 1.0));
+            result = mix(bgColour, result, opacity);
+            gl_FragColor = vec4( result, 1.0 );
+        }
     }
     `
 
 };
 
 export { bgShader };
+
+const fogWeirdness = random(1,15)
+export function fogMaterial(){
+    return new ShaderMaterial({
+        uniforms : {
+            offset: { value: random(100) },
+            cover: { value: random() },
+            scale: { value: random()*5},
+            opacity: { value: random(0.2) },
+            weirdness: { value: fogWeirdness },
+            isFog: { value: true },
+        },
+        vertexShader: bgShader.vertexShader,
+        fragmentShader: bgShader.fragmentShader,
+        side: BackSide,
+        transparent:true,
+    })
+}
