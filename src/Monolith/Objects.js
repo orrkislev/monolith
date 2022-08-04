@@ -8,8 +8,8 @@ import { fogMaterial } from './post/bgShader';
 export const terrainHeight = random(10, 100)
 const valley = random() < 0.5
 
-const withWater = random() < 0.5
-const waterHeight = -100 + random(terrainHeight-5)
+const withWater = true//random() < 0.5
+const waterHeight = -100 + random(terrainHeight-5)/2
 
 const withAlien = random() < 0.5
 const alienType = choose(['rocks','glass'])
@@ -107,8 +107,8 @@ function getTerrainHeignt(posx, posz, considerWater = true) {
         if (Math.abs(posx) <= 100) {
             if (posz > 0) val *= .3 + ((Math.abs(posx) / 100) ** 2) * .7
             else {
-                const d = Math.sqrt(posx ** 2 + posz ** 2)
-                if (d <= 100) val *= .3 + d / 100 * .7
+                const d = new THREE.Vector2(posz, posx).length
+                if (d <= 100) val *= .3 + ((d / 100) ** 2) * .7
             }
         }
     }
