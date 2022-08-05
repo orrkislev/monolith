@@ -36,7 +36,7 @@ export async function init() {
 }
 
 function background() {
-    const geometry = new THREE.BoxBufferGeometry(1500, 1500, 1000)
+    const geometry = new THREE.BoxBufferGeometry(1500, 600, 1000)
     let uniforms = {
         color: { value: new THREE.Color(0xb6ddf0) },
         brightness: { value: random(.3,1) },
@@ -45,6 +45,7 @@ function background() {
         scale: { value: random()*5},
         opacity: { value: random(0.5, 1) },
         weirdness: { value: (random()**2)*14+1 },
+        yscale: { value: random()*random()*10 },
         isFog: { value: false },
     }
     if (isNight){
@@ -58,7 +59,7 @@ function background() {
         side: THREE.BackSide
     })
     const mesh = new THREE.Mesh(geometry, material)
-    mesh.position.y = 500
+    mesh.position.y = 100
     scene.add(mesh)
 }
 
@@ -84,7 +85,7 @@ export function lights() {
 
     let sunIntensity = isNight ? 1 : random(5,20)
     sun = new THREE.DirectionalLight(0xffffff, sunIntensity)
-    const r = random(-Math.PI/8, Math.PI*5/8)
+    const r = random(-Math.PI)
     sun.position.set(400 * Math.cos(r), 50, 400 * Math.sin(r))
     sun.castShadow = true
     sun.shadow.mapSize.width = 4096

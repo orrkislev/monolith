@@ -14,8 +14,13 @@ export function doImageProcess() {
             if (p.windowHeight / ratio < p.windowWidth) canvas =  p.createCanvas(Math.round(p.windowHeight / ratio), Math.round(p.windowHeight), p.WEBGL)
             else canvas = p.createCanvas(Math.round(p.windowWidth), Math.round(p.windowWidth * ratio), p.WEBGL)
             canvas.elt.style.display = 'none'
+            document.getElementsByTagName("main")[0].appendChild(canvas.elt);
+
+
+            p.noSmooth()
 
             img = p.createGraphics(p.width, p.height, p.P2D)
+            img.noSmooth()
             const scaleImg = p.height / renderer.domElement.height
             const scaledImgWidth = renderer.domElement.width * scaleImg
             if (random() < .5) img.drawingContext.drawImage(renderer.domElement, p.width / 2 - scaledImgWidth / 2, 0, scaledImgWidth, p.height)
@@ -38,10 +43,21 @@ export function doImageProcess() {
 
             img.stroke(255)
             img.noFill()
-            img.strokeWeight(100)
-            img.rect(0, 0, p.width, p.height, 20)
-            img.strokeWeight(30)
-            img.rect(40, 40, p.width - 80, p.height - 80, 40)
+            const scl = p.width / 2000
+            img.strokeWeight(100 * scl)
+            img.rect(0, 0, p.width, p.height, 20*scl)
+            img.strokeWeight(30 * scl)
+            img.rect(40 * scl, 40 * scl, p.width - 80 * scl, p.height - 80 * scl, 40 * scl)
+            // img.textFont('Courier New')
+            // img.fill(0)
+            // img.noStroke()
+            // img.textSize(20 * scl)
+            // let txt = `MONOLITH |`
+            // txt += ` approx. ${window.$fxhashFeatures['Mass']} kg |`
+            // txt += ` ${window.$fxhashFeatures['Luminescence']} lum |`
+            // txt += ` ${p.round(random(200,6000))} K |`
+            // txt += ` ${window.$fxhashFeatures['Radiometric Dating']} date |`
+            // img.text(txt, 55 * scl, p.height - 30 * scl)
 
             shdr2 = p.createShader(revealShader.vertexShader, revealShader.fragmentShader)
             p.shader(shdr2)
@@ -54,6 +70,7 @@ export function doImageProcess() {
             p.clear()
             shdr2.setUniform('tex0', img)
             shdr2.setUniform('noiseOffset', revealNoiseOffset)
+            revealNoiseOffset += 0.0001
             shdr2.setUniform('exposure', p.frameCount / 200)
             p.rect(img, -p.width / 2, -p.height / 2, p.width, p.height)
             const val = (p.frameCount / 200) * 255

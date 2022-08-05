@@ -6,7 +6,7 @@ export let blobTexture, waterTexture, earthWormTexture
 
 export async function initTextures() {
     await createTexture()
-    // await createWaterTexture()
+    await createWaterTexture()
     // await createEarthWormTexture()
 }
 
@@ -70,7 +70,7 @@ async function createWaterTexture() {
                 }
                 waterTexture = new THREE.CanvasTexture(p.canvas);
                 waterTexture.wrapS = waterTexture.wrapT = THREE.RepeatWrapping
-                waterTexture.repeat.x = waterTexture.repeat.y = 4
+                waterTexture.repeat.x = waterTexture.repeat.y = random(4,40)
                 canvas.remove()
                 resolve(waterTexture)
             }

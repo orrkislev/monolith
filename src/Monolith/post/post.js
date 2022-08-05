@@ -163,7 +163,7 @@ export const revealShader = {
         vec2 uv = vTexCoord;
         uv.y = 1.0 - uv.y;
         vec4 origTex = texture2D(tex0,uv);
-        float noise = cnoise(uv * 3.0);
+        float noise = pow(cnoise(uv * 5.0),3.0);
         gl_FragColor = mix(origTex * noise * exposure, origTex, exposure);
     }
 `
