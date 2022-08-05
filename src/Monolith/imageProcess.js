@@ -36,7 +36,7 @@ export function doImageProcess() {
             shdr.setUniform('tex0', img)
             shdr.setUniform('time', random(1000))
             shdr.setUniform('resolution', [p.width, p.height])
-            shdr.setUniform('gray', random() < 0.95)
+            shdr.setUniform('gray', random() < 0.92)
             p.rect(img, -p.width / 2, -p.height / 2, p.width, p.height)
 
             img.image(p.get(), 0, 0)

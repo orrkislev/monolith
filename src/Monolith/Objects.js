@@ -87,7 +87,6 @@ export function terrain() {
     }
 
     camera.position.y = Math.max(getTerrainHeignt(camera.position.x, camera.position.z) + 30, -30)
-    console.log(camera.position.y)
     camera.lookAt(0, 0, 0)
 }
 
@@ -230,6 +229,22 @@ export function more() {
         const z = random(-800, 300)
         newObj.position.set(x, getTerrainHeignt(x, -z), z)
         scene.add(newObj)
+    }
+
+    if (random()<0.6){
+        const sumParticles = random(1000,10000)
+        const circleGeometry = new THREE.CircleGeometry( .2,  6 );
+        const circleMaterial = new THREE.MeshBasicMaterial( { transparent: true, opacity: 1, color: 0xffffff } );
+        const circle = new THREE.Mesh( circleGeometry, circleMaterial );
+        let tries = 0
+        for (let i=0;i<sumParticles;i++){
+            const newObj = circle.clone()
+            const x = random(-500, 500)
+            const z = random(-800, 300)
+            newObj.position.set(x, getTerrainHeignt(x, -z) + noise.noise2D(x/200,z/200) * 20 , z)
+            newObj.lookAt(camera.position)
+            scene.add(newObj)
+        }
     }
 }
 
