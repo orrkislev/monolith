@@ -2,6 +2,7 @@ import * as p5 from 'p5'
 import { renderer } from './general'
 import { random, noise, choose } from '../utils'
 import { postShader, revealShader } from './post/post'
+import { bottomText } from './Objects'
 
 export function doImageProcess() {
     new p5((p) => {
@@ -11,7 +12,7 @@ export function doImageProcess() {
         p.setup = () => {
             const ratio = 3 / 4
             let canvas
-            if (p.windowHeight / ratio < p.windowWidth) canvas =  p.createCanvas(Math.round(p.windowHeight / ratio), Math.round(p.windowHeight), p.WEBGL)
+            if (p.windowHeight / ratio < p.windowWidth) canvas = p.createCanvas(Math.round(p.windowHeight / ratio), Math.round(p.windowHeight), p.WEBGL)
             else canvas = p.createCanvas(Math.round(p.windowWidth), Math.round(p.windowWidth * ratio), p.WEBGL)
             canvas.elt.style.display = 'none'
             document.getElementsByTagName("main")[0].appendChild(canvas.elt);
@@ -45,19 +46,16 @@ export function doImageProcess() {
             img.noFill()
             const scl = p.width / 2000
             img.strokeWeight(100 * scl)
-            img.rect(0, 0, p.width, p.height, 20*scl)
+            img.rect(0, 0, p.width, p.height, 20 * scl)
             img.strokeWeight(30 * scl)
             img.rect(40 * scl, 40 * scl, p.width - 80 * scl, p.height - 80 * scl, 40 * scl)
-            // img.textFont('Courier New')
-            // img.fill(0)
-            // img.noStroke()
-            // img.textSize(20 * scl)
-            // let txt = `MONOLITH |`
-            // txt += ` approx. ${window.$fxhashFeatures['Mass']} kg |`
-            // txt += ` ${window.$fxhashFeatures['Luminescence']} lum |`
-            // txt += ` ${p.round(random(200,6000))} K |`
-            // txt += ` ${window.$fxhashFeatures['Radiometric Dating']} date |`
-            // img.text(txt, 55 * scl, p.height - 30 * scl)
+            img.textFont('Helvetica')
+            img.fill(0)
+            img.noStroke()
+            img.textSize(20 * scl)
+            img.textAlign(p.CENTER, p.CENTER)
+            img.text(bottomText, p.width / 2, p.height - 30 * scl)
+            
 
             shdr2 = p.createShader(revealShader.vertexShader, revealShader.fragmentShader)
             p.shader(shdr2)

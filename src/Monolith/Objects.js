@@ -5,6 +5,7 @@ import { blobTexture, waterTexture } from './textures.js';
 import { Reflector } from 'three/examples/jsm/objects/Reflector'
 import { fogMaterial } from './post/bgShader';
 
+export let bottomText = ''
 export const terrainHeight = random(10, 100)
 const valley = random() < 0.5
 
@@ -33,6 +34,16 @@ export function initFeatures() {
         "Radiometric Dating": choose(['unknown', 'unavailable', 'irrelevant']),
         "H2O Resistance": withWater ? '100%' : '0%',
     }
+
+    if (window.$fxhashFeatures['Bodies'] == "one") bottomText += '1 MONOLITH      |'
+    if (window.$fxhashFeatures['Bodies'] == "two") bottomText += '2 MONOLITHS      |'
+    if (window.$fxhashFeatures['Bodies'] == "three") bottomText += '3 MONOLITHS      |'
+    bottomText += `      ${window.$fxhashFeatures['Mass'].toUpperCase()}      |`
+    if (isNight) bottomText += `     LUMINESCENT      |`
+    bottomText += `      ${Math.round(random(-100, 1500))}K°      |`
+    bottomText += `      ${window.$fxhashFeatures['Radiometric Dating'].toUpperCase()} DATE      `
+    if (withWater) bottomText += `|      H2O RESISTANT      `
+    
     console.log(window.$fxhashFeatures)
 }
 
@@ -231,17 +242,17 @@ export function more() {
         scene.add(newObj)
     }
 
-    if (random()<0.6){
-        const sumParticles = random(1000,10000)
-        const circleGeometry = new THREE.CircleGeometry( .2,  6 );
-        const circleMaterial = new THREE.MeshBasicMaterial( { transparent: true, opacity: 1, color: 0xffffff } );
-        const circle = new THREE.Mesh( circleGeometry, circleMaterial );
+    if (random() < 0.6) {
+        const sumParticles = random(1000, 10000)
+        const circleGeometry = new THREE.CircleGeometry(.2, 6);
+        const circleMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 1, color: 0xffffff });
+        const circle = new THREE.Mesh(circleGeometry, circleMaterial);
         let tries = 0
-        for (let i=0;i<sumParticles;i++){
+        for (let i = 0; i < sumParticles; i++) {
             const newObj = circle.clone()
             const x = random(-500, 500)
             const z = random(-800, 300)
-            newObj.position.set(x, getTerrainHeignt(x, -z) + noise.noise2D(x/200,z/200) * 20 , z)
+            newObj.position.set(x, getTerrainHeignt(x, -z) + noise.noise2D(x / 200, z / 200) * 20, z)
             newObj.lookAt(camera.position)
             scene.add(newObj)
         }
@@ -254,8 +265,8 @@ export function alienTerrain() {
     let alienMesh
     if (alienType === 'rocks') {
         const geo = new THREE.SphereBufferGeometry(50, 100, 100)
-        const xzScale = random(50,150)
-        const yscale = random(15,50)
+        const xzScale = random(50, 150)
+        const yscale = random(15, 50)
         for (let i = 0; i < geo.attributes.position.count; i++) {
             const x = geo.attributes.position.getX(i)
             const y = geo.attributes.position.getY(i)
