@@ -30,17 +30,17 @@ export function initFeatures() {
         "Planet": withAlien ? (isFloating ? "floating " : '') + alienType : 'Earth-like',
         "Bodies": twoMonoliths ? (threeMonoliths ? "three" : "two") : "one",
         "Photography": rotatedMonolith ? '3/4' : 'front',
-        "Mass": Math.ceil(terrainHeight / 20) * 20 * 650 + 'kg',
+        "Mass": Math.ceil(terrainHeight / 20)**2 * 20 * 650 + 'kg',
         "Radiometric Dating": choose(['unknown', 'unavailable', 'irrelevant']),
         "H2O Resistance": withWater ? '100%' : '0%',
     }
 
-    if (window.$fxhashFeatures['Bodies'] == "one") bottomText += '1 MONOLITH      |'
+    if (window.$fxhashFeatures['Bodies'] == "one") bottomText += 'MONOLITH      |'
     if (window.$fxhashFeatures['Bodies'] == "two") bottomText += '2 MONOLITHS      |'
     if (window.$fxhashFeatures['Bodies'] == "three") bottomText += '3 MONOLITHS      |'
     bottomText += `      ${window.$fxhashFeatures['Mass'].toUpperCase()}      |`
     if (isNight) bottomText += `     LUMINESCENT      |`
-    bottomText += `      ${Math.round(random(-100, 1500))}K°      |`
+    bottomText += `      ${Math.round(random(-100, 1500))} K°      |`
     bottomText += `      ${window.$fxhashFeatures['Radiometric Dating'].toUpperCase()} DATE      `
     if (withWater) bottomText += `|      H2O RESISTANT      `
     

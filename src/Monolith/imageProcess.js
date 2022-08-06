@@ -52,7 +52,7 @@ export function doImageProcess() {
             img.textFont('Helvetica')
             img.fill(0)
             img.noStroke()
-            img.textSize(20 * scl)
+            img.textSize(14 * scl)
             img.textAlign(p.CENTER, p.CENTER)
             img.text(bottomText, p.width / 2, p.height - 30 * scl)
             

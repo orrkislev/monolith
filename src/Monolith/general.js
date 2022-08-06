@@ -83,7 +83,7 @@ export function makeEnvMap(){
 export function lights() {
     if (terrainHeight < 50 && random()<.3) return
 
-    let sunIntensity = isNight ? 1 : random(5,20)
+    let sunIntensity = isNight ? 1 : random(10,20)
     sun = new THREE.DirectionalLight(0xffffff, sunIntensity)
     const r = random(-Math.PI)
     sun.position.set(400 * Math.cos(r), 50, 400 * Math.sin(r))
