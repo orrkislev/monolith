@@ -1,0 +1,256 @@
+function terrain() {
+    const groundColor = choose([0xc8d77e, 0xdea68d, 0xfff689, 0xc9c351, 0xff0000])
+    const material = new THREE.MeshPhysicalMaterial({
+        color: groundColor,
+        map: terrainTexture,
+        envMapIntensity: 0.2,
+    })
+
+    const planeGeometry2 = new THREE.PlaneGeometry(600, 1000, 2500, 2500)
+    for (let i = 0; i < planeGeometry2.attributes.position.count; i++) {
+        const x = planeGeometry2.attributes.position.getX(i)
+        const y = planeGeometry2.attributes.position.getY(i)
+        planeGeometry2.attributes.position.setZ(i, getTerrainHeignt(x, y, false))
+    }
+    terrainMesh = new THREE.Mesh(planeGeometry2, material)
+    terrainMesh.receiveShadow = true
+    terrainMesh.castShadow = true
+    terrainMesh.rotation.x = -Math.PI / 2
+    scene.add(terrainMesh)
+    terrainMesh.updateWorldMatrix()
+
+    if (withWater) {
+        const seaGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1)
+        // const seaMaterial = new THREE.ShadowMaterial({})
+        const seaMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x000000, opacity: 0.3, transparent: true,
+            transmission: 0.5, transmissionMap: waterTexture, side: THREE.DoubleSide,
+            normalMap: waterTexture, normalScale: new THREE.Vector2(.1, .1),
+            roughness: .8
+        })
+        const seaMesh = new THREE.Mesh(seaGeometry, seaMaterial)
+        seaMesh.receiveShadow = true
+        seaMesh.rotation.x = -Math.PI / 2
+        seaMesh.position.y = waterHeight + 1
+        scene.add(seaMesh)
+
+        const mirrorBack1 = new Reflector(
+            new THREE.PlaneBufferGeometry(1000, 1000), {
+            color: new THREE.Color(0x000000),
+            textureWidth: window.innerWidth * window.devicePixelRatio,
+            textureHeight: window.innerHeight * window.devicePixelRatio
+        })
+        mirrorBack1.position.set(0, waterHeight, 0)
+        mirrorBack1.rotation.x = -Math.PI / 2
+        mirrorBack1.renderToScreen = true
+        scene.add(mirrorBack1)
+    }
+
+    camera.position.y = Math.max(getTerrainHeignt(camera.position.x, camera.position.z) + 30, -30)
+    camera.lookAt(0, 0, 0)
+}
+
+const terrainRandoms = [random() < .8, random() < .9, random() < .7, random() < .5, random() < 1]
+const terrainVal = [random(.5, 1), random(), random()]
+const rotatedSinRandom = random(Math.PI * 2)
+const terrainRotation = random() * Math.PI * 2
+const terrainNoiseOffset = [random(10), random(10), random(10), random(10)]
+
+function getTerrainHeignt(posx, posz, considerWater = true) {
+    const cos = Math.cos(terrainRotation)
+    const sin = Math.sin(terrainRotation)
+    const x = posx * cos - posz * sin
+    const z = posx * sin + posz * cos
+
+    let val = 0
+    if (terrainRandoms[0]) val += noise(x / 800 + terrainNoiseOffset[0], z / 800 + terrainNoiseOffset[1])
+    if (terrainRandoms[1]) val += noise(x / 300, z / 300) * 0.5
+    if (terrainRandoms[2]) val += noise(x / 100, z / 100) * 0.3
+    if (terrainRandoms[3]) val += Math.abs(Math.cos(rotatedSinRandom + x / 100)) / 2 + Math.abs(Math.sin(rotatedSinRandom + z / 100)) / 2
+    if (terrainRandoms[4]) val += noise(x / 450, z / 800) * noise(x / 30, z / 30) ** 3 * terrainVal[2]
+    val += noise(x / 300 + 15, z / 300 + 8) * noise(x * 3, z * 3) * 0.15 * terrainVal[0]
+
+    if (terrainHeight > 40) {
+        if (Math.abs(posx) <= 100) {
+            if (posz > 0) val *= .3 + ((Math.abs(posx) / 100) ** 2) * .7
+            else {
+                const d = Math.sqrt(posx ** 2 + posz ** 2)
+                if (d <= 100) val *= .3 + ((Math.abs(d) / 100) ** 2) * .7
+            }
+        }
+    }
+    if (valley) val *= map(posz, 500, -500, 0, 1)
+    val = val * terrainHeight - 100
+    if (considerWater && withWater) val = Math.max(val, waterHeight)
+    return val
+}
+
+function monolith() {
+    const geometry = new THREE.BoxBufferGeometry(20, 250, 40, 50, 50, 50)
+    const materialOptions = {
+        color: isNight ? 0xffffff : 0x111111,
+        fog: false,
+        envMapIntensity: 0.1,
+    }
+    const material = new THREE.MeshBasicMaterial(materialOptions)
+
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.castShadow = true
+
+
+    if (withKey) {
+        const rectGeo = new THREE.PlaneBufferGeometry(1, 240, 15, 39)
+        const rectMesh = new THREE.Mesh(rectGeo, new THREE.MeshBasicMaterial({ color: isNight ? 0x111111 : 0xffffff, fog: false, side: THREE.DoubleSide }))
+        rectMesh.position.set(9.9 + random(.2), 0, 0)
+        rectMesh.rotation.y = Math.PI / 2
+        mesh.add(rectMesh)
+    }
+
+    mesh.position.set(0, -50, 0)
+    mesh.rotation.y = Math.PI / 2
+    if (rotatedMonolith) {
+        mesh.rotation.y = Math.PI / 6
+        mesh.position.x = -75
+    }
+    scene.add(mesh)
+
+    if (twoMonoliths) {
+        const mesh2 = mesh.clone()
+        mesh2.position.set(100, -50, 300)
+        scene.add(mesh2)
+    }
+
+    if (threeMonoliths) {
+        const mesh3 = mesh.clone()
+        mesh3.position.set(-100, -50, 500)
+        if (rotatedMonolith) mesh3.position.x = 0
+        scene.add(mesh3)
+    }
+
+    if (isNight) {
+        const rectLight = new THREE.PointLight(0xffffff, 4, 200);
+        const pos = mesh.position.clone()
+        if (rotatedMonolith) {
+            pos.x += Math.cos(mesh.rotation.y) * 25
+            pos.z += Math.sin(mesh.rotation.z) * 25
+        } else pos.z -= 25
+        rectLight.position.set(pos.x, getTerrainHeignt(pos.x, pos.z) + 30, pos.z);
+        rectLight.castShadow = true;
+        scene.add(rectLight)
+    }
+}
+
+function fog() {
+    const geo = new THREE.PlaneBufferGeometry(1000, 600, 1, 1)
+    for (let i = 0; i < 4; i++) {
+        const mat = getNewFogMaterial()
+        const mesh = new THREE.Mesh(geo, mat)
+        mesh.position.z = 200 * i + (rotatedMonolith ? 25 : 0)
+        mesh.position.y = 150
+        scene.add(mesh)
+    }
+}
+
+function more() {
+    if (moreObject == false) return
+    const obj = new THREE.Group()
+    obj.position.set(0, -50, 0)
+
+    let geometry
+    if (moreObject == 'cylinder') geometry = new THREE.CylinderBufferGeometry(2, 5, 10, 8)
+    else {
+        const boxSize = map(terrainHeight, 0, 100, 15, 5)
+        geometry = new THREE.BoxBufferGeometry(boxSize, boxSize, boxSize, 8)
+    }
+
+    const material = new THREE.MeshPhysicalMaterial({
+        color: 0x000000,
+        flatShading: true,
+    })
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    obj.add(mesh)
+    for (let i = 0; i < 100; i++) {
+        const newObj = obj.clone()
+        const x = random(-500, 500)
+        const z = random(-800, 300)
+        newObj.position.set(x, getTerrainHeignt(x, -z), z)
+        newObj.rotation.set(random(-.3, .3), random(-3.14, 3.14), random(-.3, .3))
+        if (moreObject == 'cube') newObj.rotation.set(random(-3, 3), random(-3.14, 3.14), random(-3, 3))
+        scene.add(newObj)
+    }
+
+    const sphereGeometry = new THREE.SphereBufferGeometry(2, 8, 8)
+    const sohereMesh = new THREE.Mesh(sphereGeometry, material)
+    for (let i = 0; i < 100; i++) {
+        const newObj = sohereMesh.clone()
+        const x = random(-500, 500)
+        const z = random(-800, 300)
+        newObj.position.set(x, getTerrainHeignt(x, -z), z)
+        scene.add(newObj)
+    }
+
+    if (random() < 0.6) {
+        const sumParticles = random(1000, 10000)
+        const circleGeometry = new THREE.CircleGeometry(.2, 6);
+        const circleMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 1, color: 0xffffff });
+        const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+        let tries = 0
+        for (let i = 0; i < sumParticles; i++) {
+            const newObj = circle.clone()
+            const x = random(-500, 500)
+            const z = random(-800, 300)
+            newObj.position.set(x, getTerrainHeignt(x, -z) + noise(x / 200, z / 200) * 20, z)
+            newObj.lookAt(camera.position)
+            scene.add(newObj)
+        }
+    }
+}
+
+function alienTerrain() {
+    if (!withAlien) return
+
+    let alienMesh
+    if (alienType === 'rocks') {
+        const geo = new THREE.SphereBufferGeometry(50, 100, 100)
+        const xzScale = random(50, 150)
+        const yscale = random(15, 50)
+        for (let i = 0; i < geo.attributes.position.count; i++) {
+            const x = geo.attributes.position.getX(i)
+            const y = geo.attributes.position.getY(i)
+            const z = geo.attributes.position.getZ(i)
+            geo.attributes.position.setX(i, x * (1 + noise(y / xzScale, z / xzScale) / 5))
+            geo.attributes.position.setX(i, z * (1 + noise(x / xzScale, y / xzScale) / 5))
+            geo.attributes.position.setY(i, y * (.5 + noise(x / yscale, z / yscale) * .5) * (isFloating ? 1 : 4))
+        }
+        geo.attributes.position.needsUpdate = true
+        alienMesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+            color: 0x555555, displacementMap: terrainTexture, displacementScale: 10,
+        }))
+    } else if (alienType === 'glass') {
+        const knotGeometry = new THREE.TorusKnotBufferGeometry(30, 24, 100, 32)
+        alienMesh = new THREE.Mesh(knotGeometry, new THREE.MeshPhysicalMaterial({
+            roughness: 0, transmission: 1, thickness: 50, color: 0x999999,
+        }))
+    }
+
+    const alienMeshScale = random(.5, 1)
+    alienMesh.rotation.set(random(-1.5, 1.5), random(-3.14, 3.14), random(-1.5, 1.5))
+    alienMesh.castShadow = true
+    alienMesh.receiveShadow = true
+
+    const elementsSum = random(1, 5)
+    for (let i = 0; i < elementsSum; i++) {
+        const newAlienMesh = alienMesh.clone()
+        newAlienMesh.rotation.x = newAlienMesh.rotation.x + random(-.8, .8)
+        newAlienMesh.rotation.y = newAlienMesh.rotation.y + random(-.8, .8)
+        newAlienMesh.rotation.z = newAlienMesh.rotation.z + random(-.8, .8)
+        const a = random(Math.PI)
+        newAlienMesh.position.set(Math.cos(a) * 150, -100, Math.sin(a) * 150 + random(500))
+        const newMeshScale = alienMeshScale * random(.5, 1.2)
+        newAlienMesh.scale.set(newMeshScale, newMeshScale, newMeshScale)
+        if (isFloating) newAlienMesh.position.y += getTerrainHeignt(newAlienMesh.position.x, newAlienMesh.position.z) + random(100, 300)
+        scene.add(newAlienMesh)
+    }
+}
